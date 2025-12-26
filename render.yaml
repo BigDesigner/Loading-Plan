@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: loading-plan
+    name: akansu-loading-plan
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -8,3 +8,5 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+      - key: PDF_PASSWORD
+        value: akansu
