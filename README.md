@@ -1,19 +1,15 @@
-# Yükleme Planı Formu → PDF (Flask + ReportLab)
+# Loading Plan -> PDF (TR Font Supported)
 
-Bu mini uygulama; **MÜŞTERİ ADI / SIRA NO / ÜRÜN TİPİ / SAAT VE TARİH** alanlarını bir web formundan alır ve tek sayfalık PDF üretip indirir.
+Bu mini Flask uygulaması; formdan **Müşteri Adı / Sıra No / Ürün Tipi / Saat ve Tarih** alır ve PDF üretip indirir.
 
-## Kurulum
+## Çalıştırma (lokal)
 ```bash
-cd app
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r ../requirements.txt
+pip install -r requirements.txt
 python app.py
 ```
+Sonra tarayıcıdan: http://localhost:5000
 
-Tarayıcıdan aç:
-- http://localhost:5000
-
-## Üretim notları (kısa)
-- İnternete açık yayınlayacaksanız `debug=False` kullanın.
-- İsterseniz logo / firma bilgisi / ek alanlar / imza alanı ekleyebilirim.
+## Türkçe karakter desteği
+PDF için DejaVu fontları `fonts/` klasöründedir ve ReportLab'e register edilmiştir.

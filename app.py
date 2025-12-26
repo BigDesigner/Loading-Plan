@@ -1,19 +1,32 @@
 from flask import Flask, render_template, request, send_file
 from io import BytesIO
 from datetime import datetime
+import os
+
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
 from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 app = Flask(__name__)
+
+# --- Turkish font support (DejaVu) ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FONT_REGULAR = os.path.join(BASE_DIR, "fonts", "DejaVuSans.ttf")
+FONT_BOLD = os.path.join(BASE_DIR, "fonts", "DejaVuSans-Bold.ttf")
+
+# Register fonts once at startup
+pdfmetrics.registerFont(TTFont("DejaVuSans", FONT_REGULAR))
+pdfmetrics.registerFont(TTFont("DejaVuSans-Bold", FONT_BOLD))
+
 
 def build_pdf(customer_name: str, order_no: str, product_type: str, dt_str: str) -> BytesIO:
     """
     Create a simple Loading Plan PDF.
-    dt_str is expected like '2025-12-26T16:30' (HTML datetime-local)
+    dt_str expected like '2025-12-26T16:30' (HTML datetime-local)
     """
-    # Parse datetime-local input safely
     dt_display = dt_str.strip()
     try:
         dt_obj = datetime.fromisoformat(dt_str)
@@ -25,25 +38,25 @@ def build_pdf(customer_name: str, order_no: str, product_type: str, dt_str: str)
     c = canvas.Canvas(buffer, pagesize=A4)
     w, h = A4
 
-    # Header
     c.setTitle("Yükleme Planı")
-    c.setFont("Helvetica-Bold", 18)
-    c.drawString(25*mm, h-25*mm, "YÜKLEME PLANI")
 
-    c.setFont("Helvetica", 10)
+    # Header
+    c.setFont("DejaVuSans-Bold", 18)
+    c.drawString(25 * mm, h - 25 * mm, "YÜKLEME PLANI")
+
+    c.setFont("DejaVuSans", 10)
     c.setFillColor(colors.grey)
-    c.drawString(25*mm, h-32*mm, f"Oluşturulma: {datetime.now().strftime('%d.%m.%Y %H:%M')}")
+    c.drawString(25 * mm, h - 32 * mm, f"Oluşturulma: {datetime.now().strftime('%d.%m.%Y %H:%M')}")
     c.setFillColor(colors.black)
 
     # Box
-    left = 25*mm
-    top = h-45*mm
-    box_w = w-50*mm
-    box_h = 65*mm
+    left = 25 * mm
+    top = h - 45 * mm
+    box_w = w - 50 * mm
+    box_h = 65 * mm
     c.setLineWidth(1)
-    c.roundRect(left, top-box_h, box_w, box_h, 8, stroke=1, fill=0)
+    c.roundRect(left, top - box_h, box_w, box_h, 8, stroke=1, fill=0)
 
-    # Labels + values
     rows = [
         ("MÜŞTERİ ADI", customer_name),
         ("SIRA NO", order_no),
@@ -51,20 +64,20 @@ def build_pdf(customer_name: str, order_no: str, product_type: str, dt_str: str)
         ("SAAT VE TARİH", dt_display),
     ]
 
-    c.setFont("Helvetica-Bold", 11)
-    y = top-15*mm
-    label_w = 38*mm
+    c.setFont("DejaVuSans-Bold", 11)
+    y = top - 15 * mm
+    label_w = 38 * mm
     for label, val in rows:
-        c.drawString(left+10*mm, y, f"{label}:")
-        c.setFont("Helvetica", 11)
-        c.drawString(left+10*mm+label_w, y, (val or "").strip())
-        c.setFont("Helvetica-Bold", 11)
-        y -= 13*mm
+        c.drawString(left + 10 * mm, y, f"{label}:")
+        c.setFont("DejaVuSans", 11)
+        c.drawString(left + 10 * mm + label_w, y, (val or "").strip())
+        c.setFont("DejaVuSans-Bold", 11)
+        y -= 13 * mm
 
     # Footer note
-    c.setFont("Helvetica", 9)
+    c.setFont("DejaVuSans", 9)
     c.setFillColor(colors.grey)
-    c.drawString(25*mm, 18*mm, "Not: Bu belge otomatik oluşturulmuştur.")
+    c.drawString(25 * mm, 18 * mm, "Not: Bu belge otomatik oluşturulmuştur.")
     c.setFillColor(colors.black)
 
     c.showPage()
@@ -72,9 +85,11 @@ def build_pdf(customer_name: str, order_no: str, product_type: str, dt_str: str)
     buffer.seek(0)
     return buffer
 
+
 @app.get("/")
 def index():
     return render_template("form.html")
+
 
 @app.post("/generate")
 def generate():
@@ -92,9 +107,9 @@ def generate():
         pdf_io,
         as_attachment=True,
         download_name=fname,
-        mimetype="application/pdf"
+        mimetype="application/pdf",
     )
 
+
 if __name__ == "__main__":
-    # For local use
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=True)
